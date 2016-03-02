@@ -1,0 +1,187 @@
+<html>
+    <head>
+        <title>CTO TREE</title>
+        <script src="http://d3js.org/d3.v3.min.js"></script>  
+        <style>
+            div {
+                font-size: 15px;
+                color: red;
+                border: solid #1892B5;
+                padding 1;
+            }
+            .node:hover{
+                fill: brown;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="tree">
+        </div>
+        <script type="text/javascript">
+            var wrapFunc = function(d, i) {
+                div_pid = '#n'+d.parent_id;
+                if (d.children.length === 0){
+                    return;
+                }
+                d3.selectAll(".node")
+                    .style("display", "none");
+                var pdiv = d3.select(div_pid);
+                pdiv.style("display", "");
+                d3.select(this)
+                    .style("display", "");
+                var children_divs = Array();
+                for (i in d.children){
+                    children_divs.push('#n' + d.children[i].id);
+                }
+                for (i in children_divs){
+                    d3.select(children_divs[i]).style("display", "");
+                }
+            };
+
+
+            var create_node = function(pnode, i) {
+
+                var send_create = function () {
+                    var input = document.getElementById("name");
+                    d3.xhr("/node/create")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .post('parent=' + pnode.id + '&name=' + input.value);
+                    d3.select(this).remove();
+                    input.remove();
+                }
+
+                var form = d3.select('#n'+pnode.id);
+
+                form.append('input')
+                    .attr('type', 'text')
+                    .attr('id', 'name')
+                    .attr('name', 'name');
+
+                form.append('button')
+                    .text('submit')
+                    .on('click', send_create);
+
+            }
+
+            var remove_node = function(pnode, i) {
+                d3.xhr("/node/remove")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .post('id=' + pnode.id);
+            }
+
+            var update_node = function(pnode, i) {
+
+                var send_update = function () {
+                    var input = document.getElementById("name");
+                    d3.xhr("/node/update")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .post('id=' + pnode.id + '&name=' + input.value);
+                    d3.select(this).remove();
+                    input.remove();
+                }
+
+
+                var form = d3.select('#n'+pnode.id);
+
+                form.append('input')
+                    .attr('type', 'text')
+                    .attr('id', 'name')
+                    .attr('name', 'name');
+
+                form.append('button')
+                    .text('submit')
+                    .on('click', send_update);
+            }
+
+            var income = function(pnode, i) {
+
+                var send_income = function () {
+                    var input = document.getElementById("amount");
+                    d3.xhr("/node/income")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .post('id=' + pnode.id + '&amount=' + input.value);
+                    d3.select(this).remove();
+                    input.remove();
+                }
+
+
+                var form = d3.select('#n'+pnode.id);
+
+                form.append('input')
+                    .attr('type', 'text')
+                    .attr('id', 'amount')
+                    .attr('name', 'amount');
+
+                form.append('button')
+                    .text('submit')
+                    .on('click', send_income);
+            }
+
+
+            var show_branches = function(node, mleft, pnode, depth) {
+                var bro_names = '';
+                if (pnode != undefined){
+                    for(bro in pnode.children){
+                        bro_names += " " + pnode.children[bro].id;
+                    }
+                }
+                var child_nodes = '';
+                var grandchild_nodes = '';
+                for (i in node.children){
+                    ch = node.children[i];
+                    child_nodes += " " + ch.id;
+                    for (j in ch.children){
+                        grandch = ch.children[j];
+                        grandchild_nodes += " " + grandch.id;
+                    }
+                }
+                // create node div
+                cur = d.append("div")
+                .attr("id", 'n'+node.id)
+                .attr("class", 'node')
+                .style("margin-left", mleft)
+                .text(node.id + "{id: " + node.id + ", name: " + node.name + ", active_time: " + node.create_time + ", balance: " + node.balance + ", child_nodes: " + child_nodes + ", grandchild_nodes: " + grandchild_nodes + ", money_earned_last_month: " + node.money_earned_last_month + ", money_earned_by_child_nodes_last_month: " + node.money_earned_by_child_nodes_last_month + ", money_earned_by_grandchild_nodes_last_month: " + node.money_earned_by_grandchild_nodes_last_month + "}")
+                .data([node])
+                .on("click", wrapFunc);
+
+                // create event button
+                cur.append("button")
+                    .text("create")
+                    .data([node])
+                    .on("click", create_node);
+
+                cur.append("button")
+                    .text("remove")
+                    .data([node])
+                    .on("click", remove_node);
+
+                cur.append("button")
+                    .text("update")
+                    .data([node])
+                    .on("click", update_node);
+
+                cur.append("button")
+                    .text("income")
+                    .data([node])
+                    .on("click", income);
+                // only show 3 levels
+                if (depth >= 2){
+                    cur.style("display", "none");
+                }
+                for (var ch in node.children) {
+                    child = node.children[ch];
+                    show_branches(child, mleft+20, node, depth+1);
+                }
+            }
+            var trees = {{trees|safe}};
+            for (ti in trees) {
+                var tree = trees[ti];
+                var d = d3.select("body").append("div")
+                    .attr("class", "tree"+ti);
+                var root = tree[-1];
+                var depth = 0;
+                show_branches(root, 0, undefined, depth);
+            }
+        </script>
+    </body>
+</html>

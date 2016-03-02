@@ -1,0 +1,69 @@
+<html>
+    <head>
+        <title> The Tree of CTOs </title>
+    </head>
+    <body>
+        <svg width="1800" height="2000">
+        </svg>
+        <script src="http://d3js.org/d3.v3.min.js"></script>  
+        <script type="text/javascript">
+            var dtrees = {{trees|safe}};
+
+            var tree = dtrees[0];
+            var svg_nodes = Array();
+            var depth = 1;
+            var rcx = 600,
+                rcy = 50;
+            var root = tree[-1]
+            root.cx = rcx;
+            root.cy = rcy;
+            var node_queue = Array(root);
+            var children_queue = Array();
+            var layer_node_cnt = 1;
+            while (1) {
+                var node = node_queue.shift();
+                var svg_node = d3.select('svg')
+                    .append("g")
+                    .attr("id", node.id);
+
+                svg_node.append("circle")
+                    .attr("r", 5)
+                    .attr("cx", node.cx).attr("cy", node.cy);
+
+                svg_node.append("text")
+                    .attr("x", node.cx).attr("y", node.cy-10)
+                    .attr("dy", ".10em")
+                    .text(node.name);
+
+                svg_nodes.push(svg_node);
+
+                for (var ch in node.children) {
+                    child = node.children[ch];
+                    child.cx = rcx - depth * 40 + children_queue.length * (40 - depth*2) ;
+                    child.cy = node.cy + 100;
+                    children_queue.push(child);
+                    d3.select('svg')
+                        .append("line")
+                        .attr("x1", node.cx).attr("y1", node.cy)
+                        .attr("x2", child.cx).attr("y2", child.cy)
+                        .attr("style", "stroke:rgb(99,99,99);stroke-width:2");
+                }
+
+
+                if (node_queue.length === 0) {
+                    if (children_queue.length > 0) {
+                        var node_queue = children_queue;
+                        var children_queue = Array();
+                        depth ++;
+                        layer_node_cnt = node_queue.length;
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+             
+
+        </script>
+    </body>
+</html>

@@ -1,0 +1,8 @@
+# -*- coding: utf-8 -*-
+
+STATUS_NORMAL = 0
+STATUS_DELETE = 1
+
+FROM_SELF = 0
+FROM_CHILD = 1
+FROM_GRANDCHILD = 2
